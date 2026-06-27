@@ -23,6 +23,8 @@ const birds = [
     name: "Scarlet Macaw",
     latin: "Ara Macao",
     file: "/parrot.glb",
+    fit: 1, // per-bird size multiplier (tune so each fills the frame evenly)
+    faceSign: 1, // +1 / -1: which way it turns so its face points at the text
     blurb: "A living splash of color — one of the most vivid birds on Earth.",
     sections: [
       {
@@ -48,6 +50,8 @@ const birds = [
     name: "Toco Toucan",
     latin: "Ramphastos Toco",
     file: "/toucan.glb",
+    fit: 0.8,
+    faceSign: -1,
     blurb: "Glossy black, a snow-white throat, and that unmistakable beak.",
     sections: [
       {
@@ -73,6 +77,8 @@ const birds = [
     name: "Hyacinth Macaw",
     latin: "Anodorhynchus",
     file: "/macaw-blue.glb",
+    fit: 0.8,
+    faceSign: -1,
     blurb: "The largest flying parrot on Earth, drenched in cobalt blue.",
     sections: [
       {
@@ -181,7 +187,7 @@ birds.forEach((bird, i) => {
       const center = box.getCenter(new THREE.Vector3());
       m.position.sub(center);
       const maxDim = Math.max(size.x, size.y, size.z);
-      const scale = fitSize() / maxDim;
+      const scale = (fitSize() * (bird.fit ?? 1)) / maxDim;
       m.scale.setScalar(scale);
       m.traverse((obj) => {
         if (obj.isMesh) obj.castShadow = true;
@@ -308,11 +314,15 @@ function animate() {
     // section (f * 2π), but the angle it lands on at every section is a
     // face-on 3/4 view toward the text — so it spins fully yet never comes
     // to rest showing only its back.
-    const faceAngle = (k) => sideOf(k) * 0.65; // +0.65 faces left, -0.65 faces right
+    // Each model's "front" points a different way, so faceSign flips the
+    // turn direction per bird to make every one look toward the text.
+    const sign = bird.faceSign ?? 1;
+    const faceAngle = (k) => sideOf(k) * 0.65 * sign;
     active.position.x = bird.basePos.x + side * xMag;
     active.rotation.y = f * Math.PI * 2 + lerp(faceAngle(i0), faceAngle(i1), frac);
-    // A little zoom-in as it turns between sections, for life.
-    active.position.z = bird.basePos.z + Math.sin(frac * Math.PI) * 0.4;
+    // ZOOM in and out across the scroll: moving the bird toward / away from
+    // the camera. ~1.5 in-out cycles over the whole page.
+    active.position.z = bird.basePos.z + Math.sin(scrollProgress * Math.PI * 3) * 0.9;
   }
 
   controls.update();
@@ -330,7 +340,7 @@ window.addEventListener("resize", () => {
   const target = fitSize();
   birds.forEach((b) => {
     if (b.model) {
-      b.scale = target / b.maxDim;
+      b.scale = (target * (b.fit ?? 1)) / b.maxDim;
       b.model.scale.setScalar(b.scale);
     }
   });
