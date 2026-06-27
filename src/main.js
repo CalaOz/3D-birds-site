@@ -304,11 +304,13 @@ function animate() {
       camera.aspect;
     const xMag = Math.min(1.8, halfW * 0.38); // moderate — keeps the bird near the text
 
-    // Sit opposite the text and TURN TO FACE it. The angle stays within
-    // ±0.65 rad (~37°), so the bird is always seen from the front 3/4 —
-    // you never get stuck looking at its back with no nose.
+    // Sit opposite the text. The bird does a FULL 360° turn between each
+    // section (f * 2π), but the angle it lands on at every section is a
+    // face-on 3/4 view toward the text — so it spins fully yet never comes
+    // to rest showing only its back.
+    const faceAngle = (k) => sideOf(k) * 0.65; // +0.65 faces left, -0.65 faces right
     active.position.x = bird.basePos.x + side * xMag;
-    active.rotation.y = side * 0.65; // +angle faces left, -angle faces right (toward the text)
+    active.rotation.y = f * Math.PI * 2 + lerp(faceAngle(i0), faceAngle(i1), frac);
     // A little zoom-in as it turns between sections, for life.
     active.position.z = bird.basePos.z + Math.sin(frac * Math.PI) * 0.4;
   }
