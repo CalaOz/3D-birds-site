@@ -146,13 +146,22 @@ if (window.matchMedia("(pointer: coarse)").matches) {
   canvas.style.touchAction = "pan-y"; // allow vertical scrolling over the canvas
 }
 
-// LIGHTS ---------------------------------------------------------
-// The bird now floats freely around the screen, so we drop the ground
-// shadow (a floor shadow would look detached). The environment + key
-// light still give it shape and depth.
+// LIGHTS + GROUND ------------------------------------------------
 const keyLight = new THREE.DirectionalLight(0xffffff, 2.5);
 keyLight.position.set(3, 6, 4);
+keyLight.castShadow = true;
+keyLight.shadow.mapSize.set(2048, 2048);
+keyLight.shadow.bias = -0.0001;
 scene.add(keyLight);
+
+const ground = new THREE.Mesh(
+  new THREE.PlaneGeometry(50, 50),
+  new THREE.ShadowMaterial({ opacity: 0.35 })
+);
+ground.rotation.x = -Math.PI / 2;
+ground.position.y = -1.6;
+ground.receiveShadow = true;
+scene.add(ground);
 
 // How tall (in 3D units) a bird should be fit to — smaller on narrow
 // phone screens so the whole bird stays in frame.
@@ -276,17 +285,9 @@ gsap.utils.toArray(".panel-inner").forEach((el) => {
 // ANIMATION LOOP -------------------------------------------------
 const PANELS = 4; // hero + 3 fact sections
 const lerp = (a, b, t) => a + (b - a) * t;
-
-// PER-SCENE STAGING — where the bird stands and how big, one entry per panel.
-//   nx / ny : screen position, -1..1 (0 = center; +x = right, +y = up)
-//   size    : fraction of the screen HEIGHT the bird should fill
-// (The matching text placement lives in the panels' CSS pos-* classes.)
-const SCENES = [
-  { nx: 0.42, ny: 0.28, size: 0.58 }, // 1 — upper, on his side; text below
-  { nx: -0.42, ny: -0.3, size: 0.5 }, // 2 — other side, lower; text above
-  { nx: 0.48, ny: 0.0, size: 0.55 }, // 3 — right; text around him
-  { nx: 0.38, ny: 0.3, size: 0.5 }, // 4 — at the top; text beside + below
-];
+// Which side the bird sits on for panel k: even panels have text on the LEFT
+// (bird goes right, +1); odd panels have text on the RIGHT (bird goes left, -1).
+const sideOf = (k) => (k % 2 === 0 ? 1 : -1);
 
 function animate() {
   requestAnimationFrame(animate);
@@ -294,31 +295,34 @@ function animate() {
   const bird = birds[activeIndex];
   const active = bird.model;
   if (active) {
-    // Which scene we're on and how far between scenes (0..1).
+    // Figure out which panel we're on and how far between panels we are.
     const f = scrollProgress * (PANELS - 1);
     const i0 = Math.floor(f);
     const i1 = Math.min(i0 + 1, PANELS - 1);
     const frac = f - i0;
-    const a = SCENES[i0];
-    const b = SCENES[i1];
+    // Smoothly blended side: +1 (bird right) ↔ -1 (bird left).
+    const side = lerp(sideOf(i0), sideOf(i1), frac);
 
-    // Blend the two neighbouring scenes' staging.
-    const nx = lerp(a.nx, b.nx, frac);
-    const ny = lerp(a.ny, b.ny, frac);
-    // Zoom OUT then back IN while travelling between scenes.
-    const size = lerp(a.size, b.size, frac) * (1 - 0.28 * Math.sin(frac * Math.PI));
+    // How wide the view is in 3D units, so the slide scales to the screen.
+    const halfW =
+      Math.tan(((camera.fov / 2) * Math.PI) / 180) *
+      camera.position.z *
+      camera.aspect;
+    const xMag = Math.min(1.8, halfW * 0.38); // moderate — keeps the bird near the text
 
-    // View size in 3D units at the bird's depth.
-    const halfH = Math.tan(((camera.fov / 2) * Math.PI) / 180) * camera.position.z;
-    const halfW = halfH * camera.aspect;
-
-    // Apply position + size + a full spin that lands in a nose-on 3/4 view.
-    const targetH = size * halfH * 2; // desired on-screen height in world units
-    active.scale.setScalar((targetH * (bird.fit ?? 1)) / bird.maxDim);
-    active.position.x = bird.basePos.x + nx * halfW;
-    active.position.y = bird.basePos.y + ny * halfH;
-    active.position.z = bird.basePos.z;
-    active.rotation.y = f * Math.PI * 2 + 0.4 * (bird.faceSign ?? 1);
+    // Sit opposite the text. The bird does a FULL 360° turn between each
+    // section (f * 2π), but the angle it lands on at every section is a
+    // face-on 3/4 view toward the text — so it spins fully yet never comes
+    // to rest showing only its back.
+    // Each model's "front" points a different way, so faceSign flips the
+    // turn direction per bird to make every one look toward the text.
+    const sign = bird.faceSign ?? 1;
+    const faceAngle = (k) => sideOf(k) * 0.65 * sign;
+    active.position.x = bird.basePos.x + side * xMag;
+    active.rotation.y = f * Math.PI * 2 + lerp(faceAngle(i0), faceAngle(i1), frac);
+    // ZOOM in and out across the scroll: moving the bird toward / away from
+    // the camera. ~1.5 in-out cycles over the whole page.
+    active.position.z = bird.basePos.z + Math.sin(scrollProgress * Math.PI * 3) * 0.9;
   }
 
   controls.update();
