@@ -66,12 +66,13 @@ body {
   pointer-events: none;
 }
 
-/* Each panel is one full screen tall. */
+/* Each panel is one full screen tall. The extra top/bottom padding keeps
+   the centered text clear of the fixed top bar and the bottom switcher. */
 .panel {
   min-height: 100vh;
   display: flex;
   align-items: center;
-  padding: 0 3rem;
+  padding: 5rem 3rem 9rem;
 }
 .panel--left {
   justify-content: flex-start;
@@ -154,7 +155,7 @@ body {
   gap: 0.5rem;
   padding: 0.4rem;
   border-radius: 999px;
-  background: rgba(20, 20, 28, 0.55);
+  background: rgba(20, 20, 28, 0.8);
   backdrop-filter: blur(10px);
   border: 1px solid rgba(244, 241, 234, 0.12);
 }
