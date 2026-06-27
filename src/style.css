@@ -1,0 +1,174 @@
+/* Remove default browser spacing so the canvas fills the whole window */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html,
+body {
+  width: 100%;
+  /* IMPORTANT: no more overflow:hidden — we WANT the page to scroll now. */
+  color: #f4f1ea;
+  font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+  /* A soft "studio backdrop": lighter glow behind the subject,
+     fading to dark at the edges — like a photographer's sweep. */
+  background: radial-gradient(
+    circle at 50% 38%,
+    #3a3550 0%,
+    #1b1a26 55%,
+    #0a0a0e 100%
+  );
+  background-attachment: fixed; /* gradient stays put while content scrolls */
+}
+
+/* The 3D canvas is now a FIXED background that never scrolls away.
+   The text panels scroll over the top of it. */
+#scene {
+  display: block;
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 0;
+}
+
+/* ── TOP BAR (fixed on screen) ──────────────────────────────── */
+.topbar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 3;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 2.2rem 3rem;
+  pointer-events: none; /* let drags pass through to the 3D bird */
+}
+.brand {
+  font-weight: 700;
+  letter-spacing: 0.35em;
+  font-size: 1rem;
+}
+.brand-tag {
+  font-size: 0.7rem;
+  letter-spacing: 0.3em;
+  opacity: 0.6;
+}
+
+/* ── SCROLLING CONTENT ──────────────────────────────────────── */
+/* Sits above the canvas. pointer-events:none lets mouse drags
+   fall through to the 3D parrot; we switch it back on for buttons. */
+.content {
+  position: relative;
+  z-index: 2;
+  pointer-events: none;
+}
+
+/* Each panel is one full screen tall. */
+.panel {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  padding: 0 3rem;
+}
+.panel--left {
+  justify-content: flex-start;
+}
+.panel--right {
+  justify-content: flex-end;
+  text-align: right;
+}
+.panel--center {
+  justify-content: center;
+  text-align: center;
+}
+
+.panel-inner {
+  max-width: 30rem;
+}
+
+/* ── TYPOGRAPHY ─────────────────────────────────────────────── */
+.eyebrow {
+  text-transform: uppercase;
+  letter-spacing: 0.25em;
+  font-size: 0.75rem;
+  opacity: 0.7;
+  margin-bottom: 1rem;
+}
+.title {
+  font-size: clamp(3.5rem, 9vw, 8rem);
+  font-weight: 300;
+  line-height: 0.92;
+  letter-spacing: -0.02em;
+  text-transform: uppercase;
+}
+.title-sm {
+  font-size: clamp(2.8rem, 6vw, 5rem);
+  font-weight: 300;
+  line-height: 0.95;
+  letter-spacing: -0.02em;
+  text-transform: uppercase;
+}
+.subtitle {
+  margin-top: 1.5rem;
+  font-size: 1.1rem;
+  line-height: 1.5;
+  opacity: 0.85;
+  font-weight: 300;
+}
+.cta {
+  pointer-events: auto; /* clickable, unlike the rest of the overlay */
+  cursor: pointer;
+  margin-top: 2rem;
+  padding: 0.9rem 2rem;
+  border: 1px solid rgba(244, 241, 234, 0.5);
+  border-radius: 999px;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  letter-spacing: 0.05em;
+  transition: background 0.3s ease, color 0.3s ease;
+}
+.cta:hover {
+  background: #f4f1ea;
+  color: #1b1a26;
+}
+
+/* ── BIRD SWITCHER (fixed bottom bar) ───────────────────────── */
+.switcher {
+  position: fixed;
+  bottom: 1.8rem;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 4;
+  display: flex;
+  gap: 0.5rem;
+  padding: 0.4rem;
+  border-radius: 999px;
+  background: rgba(20, 20, 28, 0.55);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(244, 241, 234, 0.12);
+}
+.switcher-btn {
+  pointer-events: auto;
+  cursor: pointer;
+  border: none;
+  background: transparent;
+  color: #f4f1ea;
+  font: inherit;
+  font-size: 0.8rem;
+  letter-spacing: 0.05em;
+  padding: 0.6rem 1.2rem;
+  border-radius: 999px;
+  opacity: 0.6;
+  transition: opacity 0.25s ease, background 0.25s ease;
+}
+.switcher-btn:hover {
+  opacity: 1;
+}
+.switcher-btn.is-active {
+  opacity: 1;
+  background: rgba(244, 241, 234, 0.15);
+}

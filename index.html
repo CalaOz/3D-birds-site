@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>3D Product Showcase</title>
+  </head>
+  <body>
+    <!-- The 3D scene gets drawn onto this single full-screen canvas -->
+    <canvas id="scene"></canvas>
+
+    <!-- Top bar stays fixed on screen the whole time -->
+    <header class="topbar">
+      <span class="brand">AVIARY</span>
+    </header>
+
+    <!-- Scrolling content: each .panel is one full screen.
+         The 3D canvas behind stays fixed while these scroll past. -->
+    <main class="content">
+      <section class="panel panel--left">
+        <div class="panel-inner">
+          <p class="eyebrow" id="bird-eyebrow">No. 01 — Ara Macao</p>
+          <h1 class="title" id="bird-title">Scarlet Macaw</h1>
+          <p class="subtitle" id="bird-subtitle">
+            A living splash of color, rebuilt in three dimensions.
+          </p>
+        </div>
+      </section>
+
+      <section class="panel panel--right">
+        <div class="panel-inner">
+          <p class="eyebrow">Plumage</p>
+          <h2 class="title-sm">Every<br />feather</h2>
+          <p class="subtitle">Scarlet, gold and cobalt — captured from every angle as you scroll.</p>
+        </div>
+      </section>
+
+      <section class="panel panel--center">
+        <div class="panel-inner panel-inner--center">
+          <p class="eyebrow">The collection</p>
+          <h2 class="title-sm">Bring it<br />home</h2>
+          <button class="cta">Explore the collection</button>
+        </div>
+      </section>
+    </main>
+
+    <!-- Bird switcher: fixed bar, always visible. Click to swap models. -->
+    <nav class="switcher">
+      <button class="switcher-btn is-active" data-index="0">Scarlet Macaw</button>
+      <button class="switcher-btn" data-index="1">Toco Toucan</button>
+      <button class="switcher-btn" data-index="2">Hyacinth Macaw</button>
+    </nav>
+
+    <!-- Loads our JavaScript that builds the 3D world -->
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>
