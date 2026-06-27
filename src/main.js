@@ -25,6 +25,7 @@ const birds = [
     file: "/parrot.glb",
     fit: 1, // per-bird size multiplier (tune so each fills the frame evenly)
     faceSign: 1, // +1 / -1: which way it turns so its face points at the text
+    rollEnds: true, // tilt onto its side at the first & last scenes
     blurb: "A living splash of color — one of the most vivid birds on Earth.",
     sections: [
       {
@@ -306,11 +307,19 @@ function animate() {
     const halfH = Math.tan(((camera.fov / 2) * Math.PI) / 180) * camera.position.z;
     const halfW = halfH * camera.aspect;
 
+    // Bigger at the OPENING (scene 0), easing back to normal afterwards.
+    const boostOf = (k) => (k === 0 ? 1.35 : 1);
+    const boost = lerp(boostOf(i0), boostOf(i1), frac);
+
+    // The macaw rolls onto its SIDE at the first and last scenes.
+    const rollOf = (k) => (k === 0 || k === PANELS - 1 ? Math.PI / 2 : 0);
+    active.rotation.z = bird.rollEnds ? lerp(rollOf(i0), rollOf(i1), frac) : 0;
+
     if (window.innerWidth < 700) {
       // ── MOBILE: stack vertically, and SWAP places each scene —
       //    bird up / text down, then bird down / text up, alternating.
       //    (The text's matching top/bottom position is set in CSS.)
-      const targetH = 0.34 * halfH * 2; // ~34% of screen height
+      const targetH = 0.34 * boost * halfH * 2;
       active.scale.setScalar((targetH * (bird.fit ?? 1)) / bird.maxDim);
       // even scenes → bird in the upper area (+), odd scenes → lower area (−)
       const vOf = (k) => (k % 2 === 0 ? 0.4 : -0.42);
@@ -321,6 +330,7 @@ function animate() {
       active.rotation.y = f * Math.PI * 2 + 0.4 * sign;
     } else {
       // ── DESKTOP: slide to the empty side and turn to face the text.
+      active.scale.setScalar((3 * boost * (bird.fit ?? 1)) / bird.maxDim);
       const side = lerp(sideOf(i0), sideOf(i1), frac);
       const xMag = Math.min(1.8, halfW * 0.38);
       const faceAngle = (k) => sideOf(k) * 0.65 * sign;
