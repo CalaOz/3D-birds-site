@@ -180,3 +180,35 @@ body {
   opacity: 1;
   background: rgba(244, 241, 234, 0.15);
 }
+
+/* ── MOBILE: stack bird and text, swapping places each scene ──
+   Panels already alternate left/right, so we reuse that:
+   panel--left  (bird is UP)   → text sits at the BOTTOM
+   panel--right (bird is DOWN) → text sits at the TOP            */
+@media (max-width: 700px) {
+  .panel {
+    position: relative;
+    padding: 0;
+  }
+  .panel-inner {
+    position: absolute;
+    left: 1.25rem;
+    right: 1.25rem;
+    max-width: none;
+    text-align: left;
+  }
+  .panel--left .panel-inner {
+    bottom: 15vh; /* text low, clear of the switcher (bird is up top) */
+  }
+  .panel--right .panel-inner {
+    top: 13vh; /* text high, clear of the brand (bird is down low) */
+    text-align: left;
+  }
+  /* a touch smaller headline so it fits its band */
+  .title {
+    font-size: clamp(2.75rem, 13vw, 4rem);
+  }
+  .title-sm {
+    font-size: clamp(2.25rem, 10vw, 3.25rem);
+  }
+}

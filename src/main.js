@@ -300,29 +300,36 @@ function animate() {
     const i0 = Math.floor(f);
     const i1 = Math.min(i0 + 1, PANELS - 1);
     const frac = f - i0;
-    // Smoothly blended side: +1 (bird right) ↔ -1 (bird left).
-    const side = lerp(sideOf(i0), sideOf(i1), frac);
-
-    // How wide the view is in 3D units, so the slide scales to the screen.
-    const halfW =
-      Math.tan(((camera.fov / 2) * Math.PI) / 180) *
-      camera.position.z *
-      camera.aspect;
-    const xMag = Math.min(1.8, halfW * 0.38); // moderate — keeps the bird near the text
-
-    // Sit opposite the text. The bird does a FULL 360° turn between each
-    // section (f * 2π), but the angle it lands on at every section is a
-    // face-on 3/4 view toward the text — so it spins fully yet never comes
-    // to rest showing only its back.
-    // Each model's "front" points a different way, so faceSign flips the
-    // turn direction per bird to make every one look toward the text.
     const sign = bird.faceSign ?? 1;
-    const faceAngle = (k) => sideOf(k) * 0.65 * sign;
-    active.position.x = bird.basePos.x + side * xMag;
-    active.rotation.y = f * Math.PI * 2 + lerp(faceAngle(i0), faceAngle(i1), frac);
-    // ZOOM in and out across the scroll: moving the bird toward / away from
-    // the camera. ~1.5 in-out cycles over the whole page.
-    active.position.z = bird.basePos.z + Math.sin(scrollProgress * Math.PI * 3) * 0.9;
+
+    // View size in 3D units.
+    const halfH = Math.tan(((camera.fov / 2) * Math.PI) / 180) * camera.position.z;
+    const halfW = halfH * camera.aspect;
+
+    if (window.innerWidth < 700) {
+      // ── MOBILE: stack vertically, and SWAP places each scene —
+      //    bird up / text down, then bird down / text up, alternating.
+      //    (The text's matching top/bottom position is set in CSS.)
+      const targetH = 0.34 * halfH * 2; // ~34% of screen height
+      active.scale.setScalar((targetH * (bird.fit ?? 1)) / bird.maxDim);
+      // even scenes → bird in the upper area (+), odd scenes → lower area (−)
+      const vOf = (k) => (k % 2 === 0 ? 0.4 : -0.42);
+      const v = lerp(vOf(i0), vOf(i1), frac);
+      active.position.x = bird.basePos.x;
+      active.position.y = bird.basePos.y + v * halfH;
+      active.position.z = bird.basePos.z + Math.sin(scrollProgress * Math.PI * 3) * 0.9; // zoom in/out
+      active.rotation.y = f * Math.PI * 2 + 0.4 * sign;
+    } else {
+      // ── DESKTOP: slide to the empty side and turn to face the text.
+      const side = lerp(sideOf(i0), sideOf(i1), frac);
+      const xMag = Math.min(1.8, halfW * 0.38);
+      const faceAngle = (k) => sideOf(k) * 0.65 * sign;
+      active.position.x = bird.basePos.x + side * xMag;
+      active.position.y = bird.basePos.y;
+      active.rotation.y = f * Math.PI * 2 + lerp(faceAngle(i0), faceAngle(i1), frac);
+      // Gentle zoom in/out across the scroll.
+      active.position.z = bird.basePos.z + Math.sin(scrollProgress * Math.PI * 3) * 0.9;
+    }
   }
 
   controls.update();
