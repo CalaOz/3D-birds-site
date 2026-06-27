@@ -46,6 +46,7 @@ const birds = [
 ];
 let activeIndex = 0;
 let scrollRotation = 0; // updated by scroll; applied to the active bird each frame
+let scrollProgress = 0; // 0 at top of page → 1 at bottom; drives slide + zoom
 
 // 1. SCENE -------------------------------------------------------
 const scene = new THREE.Scene();
@@ -80,6 +81,14 @@ controls.dampingFactor = 0.08;
 controls.autoRotate = false;
 controls.enablePan = false;
 controls.enableZoom = false; // wheel scrolls the page instead
+
+// On TOUCH devices (phones/tablets), a one-finger drag must SCROLL the page,
+// not rotate the model. The 3D controls normally hijack touch, so we disable
+// them there and hand touch back to the browser. Desktop keeps drag-to-rotate.
+if (window.matchMedia("(pointer: coarse)").matches) {
+  controls.enabled = false;
+  canvas.style.touchAction = "pan-y"; // allow vertical scrolling over the canvas
+}
 
 // LIGHTS + GROUND ------------------------------------------------
 const keyLight = new THREE.DirectionalLight(0xffffff, 2.5);
@@ -125,6 +134,7 @@ birds.forEach((bird, i) => {
       m.visible = i === activeIndex; // hide all but the first
       bird.model = m;
       bird.scale = scale;
+      bird.basePos = m.position.clone(); // its centered "home" position
       scene.add(m);
     },
     undefined,
@@ -187,6 +197,7 @@ ScrollTrigger.create({
   end: "bottom bottom",
   scrub: 1,
   onUpdate: (self) => {
+    scrollProgress = self.progress;
     scrollRotation = self.progress * Math.PI * 4; // 2 full turns over the page
   },
 });
@@ -203,8 +214,27 @@ gsap.utils.toArray(".panel-inner").forEach((el) => {
 // ANIMATION LOOP -------------------------------------------------
 function animate() {
   requestAnimationFrame(animate);
-  const active = birds[activeIndex].model;
-  if (active) active.rotation.y = scrollRotation; // scroll spins the active bird
+
+  const bird = birds[activeIndex];
+  const active = bird.model;
+  if (active) {
+    // Spin: open at a 3/4 (45°) view, then turn with scroll.
+    active.rotation.y = Math.PI / 4 + scrollRotation;
+
+    // How wide the view is in 3D units, so the slide scales to the screen.
+    const halfW =
+      Math.tan(((camera.fov / 2) * Math.PI) / 180) *
+      camera.position.z *
+      camera.aspect;
+    const sideMag = Math.min(2.8, halfW * 0.55);
+
+    // Slide to the EMPTY side (opposite the text): right → left → right
+    // as you move through the left / right / center panels.
+    active.position.x = bird.basePos.x + Math.cos(scrollProgress * Math.PI * 2) * sideMag;
+    // Gentle zoom in/out by moving toward / away from the camera.
+    active.position.z = bird.basePos.z + Math.sin(scrollProgress * Math.PI * 2) * 0.7;
+  }
+
   controls.update();
   renderer.render(scene, camera);
 }
