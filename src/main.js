@@ -157,6 +157,10 @@ ground.position.y = -1.6;
 ground.receiveShadow = true;
 scene.add(ground);
 
+// How tall (in 3D units) a bird should be fit to — smaller on narrow
+// phone screens so the whole bird stays in frame.
+const fitSize = () => (window.innerWidth < 700 ? 2.1 : 3);
+
 // LOAD EVERY BIRD ------------------------------------------------
 // We preload all models up front. Each is centered, scaled, and
 // shadow-enabled. Only the active one is visible at a time.
@@ -176,13 +180,15 @@ birds.forEach((bird, i) => {
       const size = box.getSize(new THREE.Vector3());
       const center = box.getCenter(new THREE.Vector3());
       m.position.sub(center);
-      const scale = 3 / Math.max(size.x, size.y, size.z);
+      const maxDim = Math.max(size.x, size.y, size.z);
+      const scale = fitSize() / maxDim;
       m.scale.setScalar(scale);
       m.traverse((obj) => {
         if (obj.isMesh) obj.castShadow = true;
       });
       m.visible = i === activeIndex; // hide all but the first
       bird.model = m;
+      bird.maxDim = maxDim; // remember raw size so we can re-fit on resize
       bird.scale = scale;
       bird.basePos = m.position.clone(); // its centered "home" position
       scene.add(m);
@@ -317,4 +323,13 @@ window.addEventListener("resize", () => {
   camera.aspect = window.innerWidth / window.innerHeight;
   camera.updateProjectionMatrix();
   renderer.setSize(window.innerWidth, window.innerHeight);
+
+  // Re-fit every bird to the new screen size (e.g. phone rotated).
+  const target = fitSize();
+  birds.forEach((b) => {
+    if (b.model) {
+      b.scale = target / b.maxDim;
+      b.model.scale.setScalar(b.scale);
+    }
+  });
 });
