@@ -66,27 +66,38 @@ body {
   pointer-events: none;
 }
 
-/* Each panel is one full screen tall. */
+/* Each panel is one full screen tall. The text block is absolutely
+   placed within it (per scene) so it sits below / above / beside the bird. */
 .panel {
+  position: relative;
   min-height: 100vh;
-  display: flex;
-  align-items: center;
-  padding: 0 3rem;
 }
-.panel--left {
-  justify-content: flex-start;
-}
-.panel--right {
-  justify-content: flex-end;
-  text-align: right;
-}
-.panel--center {
-  justify-content: center;
-  text-align: center;
+.panel-inner {
+  position: absolute;
+  max-width: 26rem;
+  padding: 0 1.5rem;
 }
 
-.panel-inner {
-  max-width: 30rem;
+/* Scene 1 — bird upper, text BELOW (lower-left) */
+.pos-bottom .panel-inner {
+  left: 6vw;
+  bottom: 12vh;
+}
+/* Scene 2 — bird lower, text ABOVE (upper-left) */
+.pos-top .panel-inner {
+  left: 6vw;
+  top: 14vh;
+}
+/* Scene 3 — bird on the right, text down the LEFT (wraps around him) */
+.pos-left .panel-inner {
+  left: 6vw;
+  top: 50%;
+  transform: translateY(-50%);
+}
+/* Scene 4 — bird at the top, text starts beside him then flows below */
+.pos-beside .panel-inner {
+  left: 6vw;
+  top: 26vh;
 }
 
 /* ── TYPOGRAPHY ─────────────────────────────────────────────── */
