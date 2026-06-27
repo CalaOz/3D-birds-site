@@ -14,32 +14,43 @@
       <span class="brand">AVIARY</span>
     </header>
 
-    <!-- Scrolling content: each .panel is one full screen.
-         The 3D canvas behind stays fixed while these scroll past. -->
+    <!-- Scrolling content: each .panel is one full screen. All the text is
+         filled in by JavaScript from the active bird, so switching birds
+         swaps the whole story. Panels alternate left / right. -->
     <main class="content">
+      <!-- Panel 1 — hero (left) -->
       <section class="panel panel--left">
         <div class="panel-inner">
-          <p class="eyebrow" id="bird-eyebrow">No. 01 — Ara Macao</p>
-          <h1 class="title" id="bird-title">Scarlet Macaw</h1>
-          <p class="subtitle" id="bird-subtitle">
-            A living splash of color, rebuilt in three dimensions.
-          </p>
+          <p class="eyebrow" id="bird-eyebrow"></p>
+          <h1 class="title" id="bird-title"></h1>
+          <p class="subtitle" id="bird-subtitle"></p>
         </div>
       </section>
 
+      <!-- Panel 2 — fact 1 (right) -->
       <section class="panel panel--right">
         <div class="panel-inner">
-          <p class="eyebrow">Plumage</p>
-          <h2 class="title-sm">Every<br />feather</h2>
-          <p class="subtitle">Scarlet, gold and cobalt — captured from every angle as you scroll.</p>
+          <p class="eyebrow" id="s0-eyebrow"></p>
+          <h2 class="title-sm" id="s0-heading"></h2>
+          <p class="subtitle" id="s0-body"></p>
         </div>
       </section>
 
-      <section class="panel panel--center">
-        <div class="panel-inner panel-inner--center">
-          <p class="eyebrow">The collection</p>
-          <h2 class="title-sm">Bring it<br />home</h2>
-          <button class="cta">Explore the collection</button>
+      <!-- Panel 3 — fact 2 (left) -->
+      <section class="panel panel--left">
+        <div class="panel-inner">
+          <p class="eyebrow" id="s1-eyebrow"></p>
+          <h2 class="title-sm" id="s1-heading"></h2>
+          <p class="subtitle" id="s1-body"></p>
+        </div>
+      </section>
+
+      <!-- Panel 4 — fact 3 (right) -->
+      <section class="panel panel--right">
+        <div class="panel-inner">
+          <p class="eyebrow" id="s2-eyebrow"></p>
+          <h2 class="title-sm" id="s2-heading"></h2>
+          <p class="subtitle" id="s2-body"></p>
         </div>
       </section>
     </main>

@@ -23,7 +23,24 @@ const birds = [
     name: "Scarlet Macaw",
     latin: "Ara Macao",
     file: "/parrot.glb",
-    blurb: "A living splash of color, rebuilt in three dimensions.",
+    blurb: "A living splash of color — one of the most vivid birds on Earth.",
+    sections: [
+      {
+        eyebrow: "Plumage",
+        heading: "Painted in fire",
+        body: "Scarlet head and body melt into bands of gold, green and deep blue across the wings. The colors come from both pigment and the microscopic structure of every feather.",
+      },
+      {
+        eyebrow: "Voice",
+        heading: "Loud and clever",
+        body: "Macaws greet the rainforest with ear-splitting squawks that carry for miles — and they're sharp enough to mimic sounds and solve simple puzzles.",
+      },
+      {
+        eyebrow: "Life",
+        heading: "Bonded for decades",
+        body: "Scarlet macaws mate for life and can live fifty years or more, flying in pairs over the forests of Central and South America.",
+      },
+    ],
     model: null,
     scale: 1,
   },
@@ -31,7 +48,24 @@ const birds = [
     name: "Toco Toucan",
     latin: "Ramphastos Toco",
     file: "/toucan.glb",
-    blurb: "Glossy black, snow-white throat, and that unmistakable beak.",
+    blurb: "Glossy black, a snow-white throat, and that unmistakable beak.",
+    sections: [
+      {
+        eyebrow: "The beak",
+        heading: "Bigger than it needs to be",
+        body: "A toco's beak runs nearly a third of its body length — the largest, relative to size, of any bird. It reaches fruit on branches far too thin to climb.",
+      },
+      {
+        eyebrow: "Engineering",
+        heading: "Light as foam",
+        body: "Despite its size the beak weighs almost nothing — a honeycomb of keratin around hollow air pockets — and it radiates heat to keep the bird cool.",
+      },
+      {
+        eyebrow: "Habitat",
+        heading: "Life in the canopy",
+        body: "Tocos range across South America's forests and savannas, nesting in tree hollows and feasting on fruit, insects and the occasional egg.",
+      },
+    ],
     model: null,
     scale: 1,
   },
@@ -39,14 +73,30 @@ const birds = [
     name: "Hyacinth Macaw",
     latin: "Anodorhynchus",
     file: "/macaw-blue.glb",
-    blurb: "The largest flying parrot — drenched in deep cobalt blue.",
+    blurb: "The largest flying parrot on Earth, drenched in cobalt blue.",
+    sections: [
+      {
+        eyebrow: "Scale",
+        heading: "The blue giant",
+        body: "From beak to tail the hyacinth stretches a full metre — bigger than any other parrot that flies — wrapped in deep cobalt with flashes of gold around the eyes.",
+      },
+      {
+        eyebrow: "Power",
+        heading: "Built to crack",
+        body: "Its beak can crush hard palm nuts and even coconuts: one of the most powerful bites in the entire bird world.",
+      },
+      {
+        eyebrow: "Status",
+        heading: "Rare and precious",
+        body: "Found mainly in Brazil's Pantanal wetlands, hyacinths are endangered — only a few thousand remain in the wild.",
+      },
+    ],
     model: null,
     scale: 1,
   },
 ];
 let activeIndex = 0;
-let scrollRotation = 0; // updated by scroll; applied to the active bird each frame
-let scrollProgress = 0; // 0 at top of page → 1 at bottom; drives slide + zoom
+let scrollProgress = 0; // 0 at top of page → 1 at bottom; drives slide + turn
 
 // 1. SCENE -------------------------------------------------------
 const scene = new THREE.Scene();
@@ -142,11 +192,24 @@ birds.forEach((bird, i) => {
   );
 });
 
-// SWITCHING BIRDS ------------------------------------------------
-const titleEl = document.querySelector("#bird-title");
+// TEXT + SWITCHING -----------------------------------------------
 const eyebrowEl = document.querySelector("#bird-eyebrow");
+const titleEl = document.querySelector("#bird-title");
 const subtitleEl = document.querySelector("#bird-subtitle");
 const buttons = document.querySelectorAll(".switcher-btn");
+
+// Fill every panel's text from a bird's data (hero + 3 fact sections).
+function applyBirdText(bird, i) {
+  eyebrowEl.textContent = `No. 0${i + 1} — ${bird.latin}`;
+  titleEl.textContent = bird.name;
+  subtitleEl.textContent = bird.blurb;
+  bird.sections.forEach((s, k) => {
+    document.querySelector(`#s${k}-eyebrow`).textContent = s.eyebrow;
+    document.querySelector(`#s${k}-heading`).textContent = s.heading;
+    document.querySelector(`#s${k}-body`).textContent = s.body;
+  });
+}
+applyBirdText(birds[0], 0); // show the first bird's text on load
 
 function showBird(i) {
   if (i === activeIndex) return;
@@ -154,10 +217,7 @@ function showBird(i) {
   const next = birds[i];
   activeIndex = i;
 
-  // Update the hero text + which button looks active.
-  eyebrowEl.textContent = `No. 0${i + 1} — ${next.latin}`;
-  titleEl.textContent = next.name;
-  subtitleEl.textContent = next.blurb;
+  applyBirdText(next, i);
   buttons.forEach((b, bi) => b.classList.toggle("is-active", bi === i));
 
   // Swap deterministically FIRST: hide the old bird, show the new one
@@ -198,7 +258,6 @@ ScrollTrigger.create({
   scrub: 1,
   onUpdate: (self) => {
     scrollProgress = self.progress;
-    scrollRotation = self.progress * Math.PI * 4; // 2 full turns over the page
   },
 });
 
@@ -212,27 +271,40 @@ gsap.utils.toArray(".panel-inner").forEach((el) => {
 });
 
 // ANIMATION LOOP -------------------------------------------------
+const PANELS = 4; // hero + 3 fact sections
+const lerp = (a, b, t) => a + (b - a) * t;
+// Which side the bird sits on for panel k: even panels have text on the LEFT
+// (bird goes right, +1); odd panels have text on the RIGHT (bird goes left, -1).
+const sideOf = (k) => (k % 2 === 0 ? 1 : -1);
+
 function animate() {
   requestAnimationFrame(animate);
 
   const bird = birds[activeIndex];
   const active = bird.model;
   if (active) {
-    // Spin: open at a 3/4 (45°) view, then turn with scroll.
-    active.rotation.y = Math.PI / 4 + scrollRotation;
+    // Figure out which panel we're on and how far between panels we are.
+    const f = scrollProgress * (PANELS - 1);
+    const i0 = Math.floor(f);
+    const i1 = Math.min(i0 + 1, PANELS - 1);
+    const frac = f - i0;
+    // Smoothly blended side: +1 (bird right) ↔ -1 (bird left).
+    const side = lerp(sideOf(i0), sideOf(i1), frac);
 
     // How wide the view is in 3D units, so the slide scales to the screen.
     const halfW =
       Math.tan(((camera.fov / 2) * Math.PI) / 180) *
       camera.position.z *
       camera.aspect;
-    const sideMag = Math.min(2.8, halfW * 0.55);
+    const xMag = Math.min(1.8, halfW * 0.38); // moderate — keeps the bird near the text
 
-    // Slide to the EMPTY side (opposite the text): right → left → right
-    // as you move through the left / right / center panels.
-    active.position.x = bird.basePos.x + Math.cos(scrollProgress * Math.PI * 2) * sideMag;
-    // Gentle zoom in/out by moving toward / away from the camera.
-    active.position.z = bird.basePos.z + Math.sin(scrollProgress * Math.PI * 2) * 0.7;
+    // Sit opposite the text and TURN TO FACE it. The angle stays within
+    // ±0.65 rad (~37°), so the bird is always seen from the front 3/4 —
+    // you never get stuck looking at its back with no nose.
+    active.position.x = bird.basePos.x + side * xMag;
+    active.rotation.y = side * 0.65; // +angle faces left, -angle faces right (toward the text)
+    // A little zoom-in as it turns between sections, for life.
+    active.position.z = bird.basePos.z + Math.sin(frac * Math.PI) * 0.4;
   }
 
   controls.update();
